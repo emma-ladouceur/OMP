@@ -8,6 +8,9 @@ library(brms)
 library(patchwork)
 library(tidybayes)
 
+install.packages("scales")  # run once if not installed
+library(scales)
+
 
 
 # set your own personal working directory below
@@ -49,19 +52,19 @@ pri <- c(
 )
 
 
-e_t_mod <- brm(
-  water_temp ~
-    n_year.z +
-    s(j_season.z, k = 8) +
-    (1 | bay/location_clean) +
-    (0 + n_year.z | bay/location_clean),
-  data = e_dat,
-  family = gaussian(),
-  prior = pri,
-  iter = 5000,
-  warmup = 1000,
-  control = list(adapt_delta = 0.999, max_treedepth = 20)
-)
+# e_t_mod <- brm(
+#   water_temp ~
+#     n_year.z +
+#     s(j_season.z, k = 8) +
+#     (1 | bay/location_clean) +
+#     (0 + n_year.z | bay/location_clean),
+#   data = e_dat,
+#   family = gaussian(),
+#   prior = pri,
+#   iter = 5000,
+#   warmup = 1000,
+#   control = list(adapt_delta = 0.999, max_treedepth = 20)
+# )
 
 
 conditional_effects(e_t_mod)
@@ -227,20 +230,20 @@ t_year_fit_pop <- fitted(
 
 t_fig_trend <- ggplot() +
   geom_ribbon(data = t_year_fit_pop, aes(x = n_year, ymin = Q10, ymax = Q90), alpha = 0.30) +
-  geom_line(  data = t_year_fit_pop, aes(x = n_year, y = Estimate), colour = "black", linewidth = 1.2) +
   geom_line(
     data = t_year_fit_loc,
     aes(x = n_year, y = Estimate, group = interaction(bay, location_clean), colour = bay),
     linewidth = 0.6, alpha = 0.80
   ) +
+  geom_line(  data = t_year_fit_pop, aes(x = n_year, y = Estimate), colour = "black", linewidth = 1.2) +
   scale_colour_manual(values = t_bay_colors) +
   scale_x_continuous(breaks = pretty_breaks(n = 7)) +
   scale_y_continuous(breaks = pretty_breaks(n = 5)) +
   labs(
     x = "Monitoring year",
-    y = "Surface water temperature (°C)",
-    colour = "Bay",
-    subtitle = "b) Long-term trend (evaluated at mid-season)"
+    y = "Surface water\n temperature (°C)",
+    colour = "Bay"
+    #subtitle = "b) Long-term trend (evaluated at mid-season)"
   ) +
   theme_bw(base_size = 18) +
   theme(panel.grid.minor = element_blank(),

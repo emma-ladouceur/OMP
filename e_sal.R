@@ -55,19 +55,19 @@ pri <- c(
   prior(normal(0, 1), class = b)          # fixed effects (n_year.m)
 )
 
-e_s_mod <- brm(
-  salinity ~
-    n_year.z +
-    s(j_season.z, k = 8) +
-    (1 | bay/location_clean) +
-    (0 + n_year.z | bay/location_clean),
-  data = e_dat,
-  family = gaussian(),
-  prior = pri,
-  iter = 5000,
-  warmup = 1000,
-  control = list(adapt_delta = 0.999, max_treedepth = 20)
-)
+# e_s_mod <- brm(
+#   salinity ~
+#     n_year.z +
+#     s(j_season.z, k = 8) +
+#     (1 | bay/location_clean) +
+#     (0 + n_year.z | bay/location_clean),
+#   data = e_dat,
+#   family = gaussian(),
+#   prior = pri,
+#   iter = 5000,
+#   warmup = 1000,
+#   control = list(adapt_delta = 0.999, max_treedepth = 20)
+# )
 
 conditional_effects(e_s_mod)
 pp_check(e_s_mod)
@@ -171,9 +171,9 @@ e_fig_season <- ggplot() +
   ) +
   labs(
     x = "Day of season (Julian day relative to first sampled day in year)",
-    y = "Salinity (PSU)",
+    y = "Salinity (ppt)",
     colour = "Bay",
-    subtitle = "a) Seasonal pattern (year held at mean)"
+    subtitle = "a)"
   ) +
   theme_bw(base_size = 18) +
   theme(panel.grid.minor = element_blank(),
@@ -221,6 +221,15 @@ e_year_fit_pop <- fitted(
   bind_cols(e_year_grid_pop)
 
 e_fig_trend <- ggplot() +
+  geom_line(
+    data = e_year_fit_loc,
+    aes(
+      x = n_year, y = Estimate,
+      group  = interaction(bay, location_clean),
+      colour = bay
+    ),
+    linewidth = 0.7, alpha = 0.80
+  ) +
   geom_ribbon(
     data = e_year_fit_pop,
     aes(x = n_year, ymin = Q10, ymax = Q90),
@@ -231,24 +240,15 @@ e_fig_trend <- ggplot() +
     aes(x = n_year, y = Estimate),
     colour = "black", linewidth = 1.2
   ) +
-  geom_line(
-    data = e_year_fit_loc,
-    aes(
-      x = n_year, y = Estimate,
-      group  = interaction(bay, location_clean),
-      colour = bay
-    ),
-    linewidth = 0.6, alpha = 0.80
-  ) +
   scale_colour_manual(values = e_bay_colors) +
   scale_x_continuous(
     breaks = scales::pretty_breaks(n = 7)
   ) +
   labs(
     x = "Monitoring year",
-    y = "Salinity (PSU)",
-    colour = "Bay",
-    subtitle = "b) Long-term trend (evaluated at mid-season)"
+    y = "Salinity (ppt)",
+    colour = "Bay"
+    #subtitle = "b) Long-term trend (evaluated at mid-season)"
   ) +
   theme_bw(base_size = 18) +
   theme(panel.grid.minor = element_blank(),
@@ -377,4 +377,5 @@ fig_salinity_combo_abc <- (e_fig_season +
 
 fig_salinity_combo_abc
 
+# each line is a location coloured by bays
 

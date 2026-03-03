@@ -158,7 +158,7 @@ m3_year_center <- mean(m3_dat$n_year, na.rm = TRUE)
 m3_pred_grid_bay <- m3_fit_df %>%
   distinct(bay, location_clean, n_year.m) %>%
   group_by(bay, location_clean) %>%
-  summarise(
+  reframe(
     n_year.m = seq(
       min(n_year.m, na.rm = TRUE),
       max(n_year.m, na.rm = TRUE),
@@ -211,9 +211,10 @@ m3_pop_fit <- fitted(
 # 7) FINAL FIGURE: NATURAL YEAR ON X-AXIS
 # ------------------------------------------------------------
 m3_fig_trends <- ggplot() +
-  geom_ribbon(data = m3_pop_fit, aes(x = n_year, ymin = Q10, ymax = Q90), alpha = 0.3) +
-  geom_line(data = m3_pop_fit, aes(x = n_year, y = Estimate), colour = "black", linewidth = 1.2) +
   geom_line(data = m3_bay_fit, aes(x = n_year, y = Estimate, group  = interaction(bay, location_clean), colour = bay), linewidth = 0.7, alpha = 0.85) +
+  geom_line(data = m3_pop_fit, aes(x = n_year, y = Estimate), colour = "black", linewidth = 1.2) +
+  geom_ribbon(data = m3_pop_fit, aes(x = n_year, ymin = Q10, ymax = Q90), alpha = 0.3) +
+
   scale_colour_manual(values = m3_bay_colors) +
   scale_x_continuous(
     breaks = c(2012, 2014, 2016, 2018, 2020, 2022, 2024),
@@ -223,7 +224,7 @@ m3_fig_trends <- ggplot() +
     labels = scales::label_number(accuracy = 1)) +
   labs(
     x = "Monitoring year",
-    y = "Duration between first detection and peak \n larval abundance (>250 μm) (days)",
+    y = "Days between first detection and \n peak larval abundance (>250 μm)",
     colour = "Bay") +
   theme_bw(base_size = 18) +
   theme(
