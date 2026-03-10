@@ -7,6 +7,7 @@ library(tidyverse)
 library(ggplot2)
 library(viridis)
 library(lubridate)
+library(Rcpp)
 library(brms)
 library(patchwork)
 library(tidybayes)
@@ -73,10 +74,10 @@ bad_sal <- c(0.0, 90.0, 50.0, 70.0, 95.0, 40.0, 85.0)
 # use case when to change location spelling
 mon_clean <- mon_date_2025 %>%
   mutate( location_clean = case_when( location == "Savage Hbr" ~ "Savage Harbour" ,
-                                      location == "St. Peter's Bay" ~ "St. Peters Bay",
+                                      location == "St. Peters Bay" ~ "St. Peter's Bay",
                                       location == "Pinette" ~ "Pinette River",
                                       location == "River South Lake" ~ "South Lake",
-                                      location == "Clark's Bay" ~ "Clarks Bay",
+                                      location == "Clarks Bay" ~ "Clark's Bay",
                                       location == "Foxley River - Goff's Bridge" ~ "Foxley River - Goff Bridge",
                                       location == "Foxley - Goff Bridge" ~ "Foxley River - Goff Bridge",
                                       location == "Foxley - Gibb's Creek" ~ "Foxley River - Gibb's Creek",
@@ -88,21 +89,26 @@ mon_clean <- mon_date_2025 %>%
                                       location == "Rustico" ~ "Rustico Bay",
                                       location == "Oyster Bed Bridge" ~ "Rustico Bay",
                                       location == "Kildare River" ~ "Montrose Bridge",
+                                      location == "Brackley Bay" ~ "Covehead Bay",
                                       TRUE ~ location)) %>%
   
+  # removing clarks bay, launching pond, and little basin = all brood stock experiments, not part of OMP
+  filter(!location_clean %in% c("Clark's Bay", "Launching Pond", "Little Basin")) %>%
+  
   # locations are grouped according to what Bay they flow into
-  mutate( bay = case_when( location_clean == "Foxley River - Gibb's Creek" ~ "Cascumpec Bay",
-                           location_clean == "Foxley River - Goff Bridge" ~ "Cascumpec Bay",
-                           location_clean == "Foxley River - Lot 6 Pt." ~ "Cascumpec Bay",
+  mutate( bay = case_when( location_clean == "Foxley River - Gibb's Creek" ~ "Foxley River",
+                           location_clean == "Foxley River - Goff Bridge" ~ "Foxley River",
+                           location_clean == "Foxley River - Lot 6 Pt." ~ "Foxley River",
                            #location_clean == "Kildare River" ~ "Cascumpec Bay",
                            location_clean == "Montrose Bridge" ~ "Cascumpec Bay",
                            location_clean == "Mill River" ~ "Cascumpec Bay",
+                           location_clean == "Dock River" ~ "Cascumpec Bay",
                            location_clean == "Enmore River" ~ "Egmont Bay",
                            location_clean == "Percival River" ~ "Egmont Bay",
-                           location_clean == "Bideford River - Green Park" ~ "Malpeque Bay",
-                           location_clean == "Bideford River - Old Wharf" ~ "Malpeque Bay",
-                           location_clean == "Bideford River - Paugh's Creek" ~ "Malpeque Bay",
-                           location_clean == "Bideford River - Station" ~ "Malpeque Bay",
+                           location_clean == "Bideford River - Green Park" ~ "Bideford River",
+                           location_clean == "Bideford River - Old Wharf" ~ "Bideford River",
+                           location_clean == "Bideford River - Paugh's Creek" ~ "Bideford River",
+                           location_clean == "Bideford River - Station" ~ "Bideford River",
                            location_clean == "Bentick Cove" ~ "Malpeque Bay",
                            location_clean == "Grand River" ~ "Malpeque Bay",
                            location_clean == "Darnley Basin" ~ "Malpeque Bay",
@@ -113,26 +119,33 @@ mon_clean <- mon_date_2025 %>%
                            location_clean == "East River - MacWilliams Seafood" ~ "Hillsborough Bay",
                            location_clean == "North River" ~ "Hillsborough Bay",
                            location_clean == "West River" ~ "Hillsborough Bay",
-                           location_clean == "Orwell River" ~ "Hillsborough Bay",
-                           location_clean == "Pownal Bay" ~ "Hillsborough Bay",
-                           location_clean == "Vernon River" ~ "Hillsborough Bay",
+                           location_clean == "Orwell River" ~ "Orwell Bay",
+                           location_clean == "Pownal Bay" ~ "Orwell Bay",
+                           location_clean == "Vernon River" ~ "Orwell Bay",
+                           location_clean == "Pinette River" ~ "Orwell Bay",
                            location_clean == "Rustico Bay" ~ "Rustico Bay",
-                           location_clean == "St. Peters Bay" ~ "St. Peters Bay",
-                           location_clean == "Pinette River" ~ "Hillsborough Bay",
-                           location_clean == "Clarks Bay" ~ "Clarks Bay",
-                           location_clean == "Launching Pond" ~ "Cardigan Bay",
-                           location_clean == "Little Basin" ~ "Malpeque Bay",
+                           location_clean == "St. Peter's Bay" ~ "St. Peter's Bay",
+                           location_clean == "Pinette River" ~ "Orwell Bay",
+                           #location_clean == "Clark's Bay" ~ "Clark's Bay",
+                           #location_clean == "Launching Pond" ~ "Cardigan Bay",
+                           #location_clean == "Little Basin" ~ "Malpeque Bay",
                            location_clean == "New London" ~ "New London Bay",
                            location_clean == "North Lake" ~ "North Lake",
-                           location_clean == "South Lake" ~ "Malpeque Bay",
-                           location_clean == "Bedeque Bay" ~ "Bedeque Bay",
+                           location_clean == "South Lake" ~ "South Lake",
                            location_clean == "Tracadie Bay" ~ "Tracadie Bay",
                            location_clean == "Souris River" ~ "Colville Bay",
                            location_clean == "Savage Harbour" ~ "Savage Harbour",
-                           location_clean == "Dock River" ~ "Savage Harbour",
                            #location_clean == "Oyster Bed Bridge" ~ "Rustico Bay",
-                           location_clean == "Brackley Bay" ~ "Brackley Bay",
+                           location_clean == "Brackley Bay" ~ "Covehead Bay",
                            TRUE ~ location_clean)) %>%
+  
+  #south shore (vernon, orwell, pownal)
+  # mutate( shore = case_when(
+  #                          location_clean == "Orwell River" ~ "South Shore",
+  #                          location_clean == "Pownal Bay" ~ "South Shore",
+  #                          location_clean == "Vernon River" ~ "South Shore",
+  #                          TRUE ~ "North Shore")) %>%
+  
   # filter(water_temp != 722.00) %>% filter(water_temp != 99.90) %>% filter(water_temp != 247.00) %>%
   # filter(water_temp != 0.0) %>% filter(water_temp != 34.0) %>% 
   # filter(salinity != 0.0) %>% filter(salinity != 90.0) %>% filter(salinity != 50.0) %>%
@@ -155,6 +168,11 @@ mon_clean <- mon_date_2025 %>%
     salinity   = if_else(salinity_raw   %in% bad_sal, NA_real_, salinity_raw)
   )
 
+View(mon_clean %>% 
+       select(location_clean, bay) %>% 
+       distinct() %>% 
+       arrange(bay, location_clean))
+
 # any other crazy values?
 nrow(mon_clean)
 summary(mon_clean)
@@ -171,7 +189,9 @@ mon_clean %>% filter(salinity == 95.0)
 mon_clean %>% filter(salinity == 40.0)
 mon_clean %>% filter(salinity == 85.0)
 colnames(mon_clean)
-view(mon_clean)
+
+mon_clean %>%
+  select(bay, location_clean) %>% distinct() %>% arrange(bay, location_clean)
 
 bay_list <- mon_clean %>% select(bay, location_clean) %>% distinct() %>% arrange(bay, location_clean)
 write.csv(bay_list, "~/Data/OMP/bay_list.csv", row.names = FALSE)
