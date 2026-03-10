@@ -117,7 +117,7 @@ la_s_sal_df <- tibble(
 la_s_grid <- la_s_dat %>%
   distinct(n_year, water_temp) %>%
   group_by(n_year) %>%
-  summarise(
+  reframe(
     water_temp = seq(
       quantile(water_temp, 0.05, na.rm = TRUE),
       quantile(water_temp, 0.95, na.rm = TRUE),
@@ -233,7 +233,7 @@ la_s_med_df <- tibble(
 la_s_grid_med <- la_s_dat %>%
   distinct(n_year, water_temp) %>%
   group_by(n_year) %>%
-  summarise(
+  reframe(
     water_temp = seq(
       quantile(water_temp, 0.05, na.rm = TRUE),
       quantile(water_temp, 0.95, na.rm = TRUE),
