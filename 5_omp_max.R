@@ -56,6 +56,8 @@ m4_max_l_dat %>% filter(bay == "Tracadie Bay")
 # ============================================================
 # 
 #--- Fit model (keep these names exactly as requested) ---
+
+
 # m4_max_temp_time_sal <- brm(
 #   julian_date ~ water_temp.m * n_year.m * salinity.m +
 #     #(1 + water_temp.m * n_year.m || bay/location_clean),
@@ -66,6 +68,7 @@ m4_max_l_dat %>% filter(bay == "Tracadie Bay")
 #   family  = gaussian(),
 #   control = list(adapt_delta = 0.999, max_treedepth = 20)
 # )
+
 
 # ==========================================================
 
